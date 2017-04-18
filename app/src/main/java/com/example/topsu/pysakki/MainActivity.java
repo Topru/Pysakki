@@ -4,11 +4,17 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -16,31 +22,37 @@ import org.json.JSONObject;
 import java.util.Iterator;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+
+    /**
+     * Provides the entry point to Google Play services.
+     */
+    protected GoogleApiClient mGoogleApiClient;
+
+    Locator locator;
+
+    double test_latitude = 60.4615937;
+    double test_longitude = 22.2240839;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
     }
 
-    public void getLocation(View v) {
-        // instantiate the location manager, note you will need to request permissions in your manifest
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        // get the last know location from your location manager.
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        final Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        // now get the lat/lon from the location and do something with it.
-        //nowDoSomethingWith(location.getLatitude(), location.getLongitude());
+    public void getPysakki(View v) {
         final Pysakki Pysakki = new Pysakki();
+        Locator locator = new Locator(mGoogleApiClient, this);
+        final double longitude = locator.getLongitude();
+        final double latitude = locator.getLatitude();
+
         VolleyRequest.makeVolleyRequest(this, "http://data.foli.fi/gtfs/stops", new VolleyResponseListener() {
             @Override
             public void getResult(String response) {
@@ -48,26 +60,27 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     JSONObject jObject = new JSONObject(response);
                     Iterator<?> keys = jObject.keys();
-                    double distance = 9999;
-                    String closest = "";
-                    while( keys.hasNext() ) {
-                        String key = (String)keys.next();
-                        if ( jObject.get(key) instanceof JSONObject ) {
+                    Double distance = null;
+                    while (keys.hasNext()) {
+                        String key = (String) keys.next();
+                        if (jObject.get(key) instanceof JSONObject) {
                             JSONObject stop = jObject.getJSONObject(key);
                             double stopLong = stop.getDouble("stop_lon");
                             double stopLati = stop.getDouble("stop_lat");
-                            double origin = Math.pow(location.getLongitude(), 2) + Math.pow(location.getLatitude(), 2);
-                            double stopLoc = Math.pow(stopLong, 2) + Math.pow(stopLati, 2);
-                            double locDiff = origin-stopLoc;
-                            if(Math.abs(locDiff) < distance ) {
+                            double origin = longitude + latitude;
+                            double stopLoc = stopLong + stopLati;
+                            double locDiff = origin - stopLoc;
+                            if(distance == null) {
+                                distance = Math.abs(locDiff);
+                            }
+                            if (Math.abs(locDiff) < distance) {
                                 distance = Math.abs(locDiff);
                                 Pysakki.setStopId(key);
                                 Pysakki.setStopLat(stopLati);
                                 Pysakki.setStopLong(stopLong);
                                 Pysakki.setStopName(stop.getString("stop_name"));
-                                closest = key;
                             }
-                            Log.i("app", String.valueOf(distance) + " " + closest);
+                           //Log.i("app", String.valueOf(locDiff) + stop.getString("stop_name"));
                         }
                     }
                 } catch (JSONException e) {
@@ -79,5 +92,28 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
+    protected void onStart() {
+        mGoogleApiClient.connect();
+        super.onStart();
+    }
 
+    protected void onStop() {
+        mGoogleApiClient.disconnect();
+        super.onStop();
+    }
+
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
 }
