@@ -47,51 +47,23 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public void getPysakki(View v) {
-        final Pysakki Pysakki = new Pysakki();
-        Locator locator = new Locator(mGoogleApiClient, this);
-        final double longitude = locator.getLongitude();
-        final double latitude = locator.getLatitude();
-
+    public void makePysakkiRequest(View v) {
         VolleyRequest.makeVolleyRequest(this, "http://data.foli.fi/gtfs/stops", new VolleyResponseListener() {
             @Override
             public void getResult(String response) {
-                //Log.i("app", "Response is: "+ response);
-                try {
-                    JSONObject jObject = new JSONObject(response);
-                    Iterator<?> keys = jObject.keys();
-                    Double distance = null;
-                    while (keys.hasNext()) {
-                        String key = (String) keys.next();
-                        if (jObject.get(key) instanceof JSONObject) {
-                            JSONObject stop = jObject.getJSONObject(key);
-                            double stopLong = stop.getDouble("stop_lon");
-                            double stopLati = stop.getDouble("stop_lat");
-                            double origin = longitude + latitude;
-                            double stopLoc = stopLong + stopLati;
-                            double locDiff = origin - stopLoc;
-                            if(distance == null) {
-                                distance = Math.abs(locDiff);
-                            }
-                            if (Math.abs(locDiff) < distance) {
-                                distance = Math.abs(locDiff);
-                                Pysakki.setStopId(key);
-                                Pysakki.setStopLat(stopLati);
-                                Pysakki.setStopLong(stopLong);
-                                Pysakki.setStopName(stop.getString("stop_name"));
-                            }
-                           //Log.i("app", String.valueOf(locDiff) + stop.getString("stop_name"));
-                        }
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                String lahin = Pysakki.getStopName();
-                Log.i("app", lahin);
+                handlePysakki(response);
             }
         });
 
     }
+
+    public void handlePysakki(String response){
+        final Locator locator = new Locator(mGoogleApiClient, this);
+        Pysakki Pysakki = locator.getClosestPysakki(response);
+       // Log.i("main", Pysakki.getStopName());
+
+    }
+
     protected void onStart() {
         mGoogleApiClient.connect();
         super.onStart();

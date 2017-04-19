@@ -2,6 +2,7 @@ package com.example.topsu.pysakki;
 
 import android.app.Application;
 import android.content.Context;
+import android.location.Location;
 import android.util.Log;
 
 import com.android.volley.Request;
@@ -24,8 +25,11 @@ public class Pysakki extends Application {
     private Context context;
     private String stopId;
     private String stopName = null;
-    private double stopLat;
-    private double stopLong;
+
+    private Location location;
+
+
+
 
     public void setStopId(String id){
         this.stopId = id;
@@ -35,12 +39,8 @@ public class Pysakki extends Application {
         this.stopName = stopName;
     }
 
-    public void setStopLat(double stopLat) {
-        this.stopLat = stopLat;
-    }
-
-    public void setStopLong(double stopLong) {
-        this.stopLong = stopLong;
+    public void setLocation(Location location) {
+        this.location = location;
     }
 
     public String getStopName(){

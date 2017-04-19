@@ -21,9 +21,11 @@ import java.util.Map;
  * Created by Topsu on 15.4.2017.
  */
 
-public class VolleyRequest {
+public class VolleyRequest{
+
     public static void makeVolleyRequest(Context context, String url, final VolleyResponseListener listener) {
-        RequestQueue queue = Volley.newRequestQueue(context);
+        Context appContext = context.getApplicationContext();
+        RequestQueue queue = Volley.newRequestQueue(appContext);
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                 new Response.Listener<String>() {
                     @Override
