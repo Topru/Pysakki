@@ -13,7 +13,9 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Created by Topsu on 15.4.2017.
@@ -33,7 +35,15 @@ public class VolleyRequest {
             public void onErrorResponse(VolleyError error) {
                 Log.i("app", "That didn't work!");
             }
-        });
+        }){
+            @Override
+            public Map<String, String> getHeaders(){
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("User-agent", "Pysakki/1.0.1; (Android/*; +https://github.com/Topru/Pysakki; topruttaja@gmail.com)");
+                return headers;
+            }
+
+        };
         // Add the request to the RequestQueue.
         queue.add(stringRequest);
     }
