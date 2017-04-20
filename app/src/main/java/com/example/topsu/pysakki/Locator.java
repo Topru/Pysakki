@@ -15,10 +15,15 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by Topsu on 18.4.2017.
@@ -52,53 +57,59 @@ public class Locator extends AppCompatActivity {
         Log.i("lcoator", mLastLocation.toString());
     }
 
-    public Pysakki getClosestPysakki(String json){
-        Pysakki Pysakki = new Pysakki();
+    public void getClosestPysakki(String json, final PysakkiListener listener){
+        Integer closestRouteIndex = null;
         //Log.i("app", "Response is: "+ response);
+        final List<Pysakki> pysakkiList = new ArrayList();
         try {
             JSONObject jObject = new JSONObject(json);
             Iterator<?> keys = jObject.keys();
-            Double distance = null;
+            Float distance = null;
+            String currentLoc = mLastLocation.getLatitude() + "," + mLastLocation.getLongitude();
+
             while (keys.hasNext()) {
 
                 String key = (String) keys.next();
                 if (jObject.get(key) instanceof JSONObject) {
+                    Pysakki Pysakki = new Pysakki();
                     JSONObject stop = jObject.getJSONObject(key);
                     double stopLong = stop.getDouble("stop_lon");
                     double stopLati = stop.getDouble("stop_lat");
+                    String stopLoc = Double.valueOf(stopLati) + "," + Double.valueOf(stopLong);
+                    stopLocation = new Location("stoploc");
+                    stopLocation.setLatitude(stopLati);
+                    stopLocation.setLongitude(stopLong);
+                    float stopDistance = mLastLocation.distanceTo(stopLocation);
+                    Pysakki.setLocation(stopLocation);
+                    Pysakki.setStopId(key);
+                    Pysakki.setStopName(stop.getString("stop_name"));
+                    Pysakki.setDistance(stopDistance);
 
-                    Location newStopLoc = new Location("newStoploc");
-                    Log.i("Locator", "starting route request");
+                    pysakkiList.add(Pysakki);
 
-                    //todo: limit to 4 closest stops
-                    Route.makeRouteRequest(context, mLastLocation, newStopLoc, "walking", new Routelistener() {
-                        @Override
-                        public void getRoute(JSONObject route) {
-                            Log.i("Locator", route.toString());
-                        }
-                    });
-
-                   /* if(distance == null) {
-                        distance = Math.abs(locDiff);
-                    }
-                    //Log.i("app", stop.getString("stop_name") + Boolean.toString(Math.abs(locDiff) < distance) + Double.toString(distance));
-                    if (Math.abs(locDiff) < distance) {
-                        stopLocation = new Location("stoploc");
-                        distance = Math.abs(locDiff);
-                        stopLocation.setLatitude(stopLati);
-                        stopLocation.setLongitude(stopLong);
-                        Pysakki.setStopId(key);
-                        Pysakki.setLocation(stopLocation);
-                        Pysakki.setStopName(stop.getString("stop_name"));
-                    }*/
                 }
             }
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        String lahin = Pysakki.getStopName();
+        //String lahin = Pysakki.getStopName();
         //Log.i("app", lahin);
-        return Pysakki;
+        Route.makeRouteRequest(context, mLastLocation, pysakkiList, "walking", new Routelistener() {
+            @Override
+            public void getRoute(JSONObject route) {
+                try {
+                    JSONArray routeArray = route.getJSONArray("rows");
+                    JSONObject routesObject = routeArray.getJSONObject(0);
+                    JSONArray routes = routesObject.getJSONArray("elements");
+                    Log.i("loc", routes.toString());
+                    Collections.sort(pysakkiList);
+                    listener.getStop(pysakkiList.get(Route.indexOfMin(routes)));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     public Location getLocation(){

@@ -54,14 +54,16 @@ public class MainActivity extends AppCompatActivity implements
                 handlePysakki(response);
             }
         });
-
     }
 
     public void handlePysakki(String response){
         final Locator locator = new Locator(mGoogleApiClient, this);
-        Pysakki Pysakki = locator.getClosestPysakki(response);
-       // Log.i("main", Pysakki.getStopName());
-
+        locator.getClosestPysakki(response, new PysakkiListener() {
+            @Override
+            public void getStop(Pysakki pysakki) {
+                Log.i("main", pysakki.getStopName());
+            }
+        });
     }
 
     protected void onStart() {
