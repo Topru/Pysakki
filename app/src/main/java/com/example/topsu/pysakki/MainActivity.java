@@ -14,7 +14,10 @@ import android.view.View;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,11 +32,17 @@ public class MainActivity extends AppCompatActivity implements
      * Provides the entry point to Google Play services.
      */
     protected GoogleApiClient mGoogleApiClient;
+    protected LocationRequest mLocationRequest;
+    protected LocationSettingsRequest mLocationSettingsRequest;
 
-    Locator locator;
+    protected Locator locator;
+
+    protected Boolean mRequestingLocationUpdates;
+
 
     double test_latitude = 60.4615937;
     double test_longitude = 22.2240839;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,6 +54,10 @@ public class MainActivity extends AppCompatActivity implements
                     .addApi(LocationServices.API)
                     .build();
         }
+        createLocationRequest();
+        buildLocationSettingsRequest();
+
+
     }
 
     public void makePysakkiRequest(View v) {
@@ -56,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements
         });
     }
 
-    public void handlePysakki(String response){
+    public void handlePysakki(String response) {
         final Locator locator = new Locator(mGoogleApiClient, this);
         locator.getClosestPysakki(response, new PysakkiListener() {
             @Override
@@ -76,9 +89,54 @@ public class MainActivity extends AppCompatActivity implements
         super.onStop();
     }
 
+    protected void createLocationRequest() {
+        mLocationRequest = new LocationRequest();
+
+        // Sets the desired interval for active location updates. This interval is
+        // inexact. You may not receive updates at all if no location sources are available, or
+        // you may receive them slower than requested. You may also receive updates faster than
+        // requested if other applications are requesting location at a faster interval.
+        mLocationRequest.setInterval(5000);
+
+        // Sets the fastest rate for active location updates. This interval is exact, and your
+        // application will never receive updates faster than this value.
+        mLocationRequest.setFastestInterval(5000);
+
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }
+
+    protected void buildLocationSettingsRequest() {
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+        builder.addLocationRequest(mLocationRequest);
+        mLocationSettingsRequest = builder.build();
+    }
+
+    protected void startLocationUpdates() {
+        Log.i("locationupdates", "locupdates started");
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        LocationServices.FusedLocationApi.requestLocationUpdates(
+                mGoogleApiClient, mLocationRequest, new LocationListener() {
+                    @Override
+                    public void onLocationChanged(Location location) {
+                        Log.i("locationupdates", location.toString());
+                    }
+                });
+    }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        if (true) {
+            startLocationUpdates();
+        }
     }
 
     @Override
