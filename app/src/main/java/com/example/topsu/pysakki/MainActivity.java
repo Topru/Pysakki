@@ -1,5 +1,8 @@
 package com.example.topsu.pysakki;
 
+import android.app.DialogFragment;
+import android.app.FragmentManager;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -11,6 +14,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.TimePicker;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -26,7 +30,7 @@ import java.util.Iterator;
 
 
 public class MainActivity extends AppCompatActivity implements
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, TimePickerDialog.OnTimeSetListener {
 
     /**
      * Provides the entry point to Google Play services.
@@ -59,6 +63,19 @@ public class MainActivity extends AppCompatActivity implements
 
 
     }
+    public void showTimePickerDialog(View v) {
+        DialogFragment newFragment = new TimePickerFragment();
+        FragmentManager fm = getFragmentManager();
+        newFragment.show(fm, "timePicker");
+    }
+    TimePickerDialog.OnTimeSetListener mTimeSetListener =
+            new TimePickerDialog.OnTimeSetListener() {
+                @Override
+                public void onTimeSet(android.widget.TimePicker view,
+                                      int hourOfDay, int minute) {
+                    Log.i("asd",hourOfDay+":"+minute);
+                }
+            };
 
     public void makePysakkiRequest(View v) {
         VolleyRequest.makeVolleyRequest(this, "http://data.foli.fi/gtfs/stops", new VolleyResponseListener() {
@@ -75,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void getStop(Pysakki pysakki) {
                 Log.i("main", pysakki.getStopName());
+                Log.i("main", pysakki.getStopId());
             }
         });
     }
@@ -147,5 +165,11 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
+    }
+
+    @Override
+    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+        Log.i("main", Integer.toString(hourOfDay));
+        Log.i("main", "asdasdasd");
     }
 }
