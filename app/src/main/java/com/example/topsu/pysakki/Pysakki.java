@@ -36,6 +36,10 @@ public class Pysakki extends Application implements Comparable<Pysakki> {
         this.stopId = id;
     }
 
+    public String getStopId(){
+        return this.stopId;
+    }
+
 
     public Float getDistance() {
         return distance;
