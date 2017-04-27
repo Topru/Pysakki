@@ -54,10 +54,10 @@ public class Locator extends AppCompatActivity {
         }
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                 apiClient);
-        Log.i("lcoator", mLastLocation.toString());
+        Log.i("locator", mLastLocation.toString());
     }
 
-    public void getClosestPysakki(String json, final PysakkiListener listener){
+    public void getClosestPysakki(String json, Location location, final PysakkiListener listener){
         Integer closestRouteIndex = null;
         //Log.i("app", "Response is: "+ response);
         final List<Pysakki> pysakkiList = new ArrayList();
@@ -65,7 +65,7 @@ public class Locator extends AppCompatActivity {
             JSONObject jObject = new JSONObject(json);
             Iterator<?> keys = jObject.keys();
             Float distance = null;
-            String currentLoc = mLastLocation.getLatitude() + "," + mLastLocation.getLongitude();
+            String currentLoc = location.getLatitude() + "," + location.getLongitude();
 
             while (keys.hasNext()) {
 

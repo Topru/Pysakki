@@ -4,6 +4,7 @@ import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.app.TimePickerDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -14,6 +15,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TimePicker;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -22,10 +24,17 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.sql.Time;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 
 
@@ -43,6 +52,11 @@ public class MainActivity extends AppCompatActivity implements
 
     protected Boolean mRequestingLocationUpdates;
 
+    protected Calendar cal = Calendar.getInstance();
+
+    protected Button timeButton;
+
+    private static final int mapResultCode = 0;
 
     double test_latitude = 60.4615937;
     double test_longitude = 22.2240839;
@@ -60,22 +74,41 @@ public class MainActivity extends AppCompatActivity implements
         }
         createLocationRequest();
         buildLocationSettingsRequest();
-
+        cal.setTime(new Date());
+        timeButton = (Button)this.findViewById(R.id.timepicker);
+        timeButton.setText(Integer.toString(cal.get(Calendar.HOUR_OF_DAY)) + ":" + Integer.toString(cal.get(Calendar.MINUTE)));
+        Log.i("asd", Integer.toString(cal.get(Calendar.HOUR_OF_DAY)));
+        Log.i("asd", Integer.toString(cal.get(Calendar.MINUTE)));
 
     }
+    public void setDestination(View view) {
+        Location location = new Locator(mGoogleApiClient, this).getLocation();
+        Intent intent = new Intent(this, MapsActivity.class);
+        intent.putExtra("lat", location.getLatitude());
+        intent.putExtra("lon", location.getLongitude());
+        startActivityForResult(intent, mapResultCode);
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == mapResultCode) {
+            if (resultCode == RESULT_OK) {
+                Bundle bundle = data.getParcelableExtra("bundle");
+                LatLng destination = bundle.getParcelable("destination");
+                Log.i("asd", destination.toString());
+            }
+        }
+
+    }
+
+
+
     public void showTimePickerDialog(View v) {
         DialogFragment newFragment = new TimePickerFragment();
         FragmentManager fm = getFragmentManager();
         newFragment.show(fm, "timePicker");
     }
-    TimePickerDialog.OnTimeSetListener mTimeSetListener =
-            new TimePickerDialog.OnTimeSetListener() {
-                @Override
-                public void onTimeSet(android.widget.TimePicker view,
-                                      int hourOfDay, int minute) {
-                    Log.i("asd",hourOfDay+":"+minute);
-                }
-            };
 
     public void makePysakkiRequest(View v) {
         VolleyRequest.makeVolleyRequest(this, "http://data.foli.fi/gtfs/stops", new VolleyResponseListener() {
@@ -88,11 +121,12 @@ public class MainActivity extends AppCompatActivity implements
 
     public void handlePysakki(String response) {
         final Locator locator = new Locator(mGoogleApiClient, this);
-        locator.getClosestPysakki(response, new PysakkiListener() {
+        locator.getClosestPysakki(response, locator.getLocation(), new PysakkiListener() {
             @Override
             public void getStop(Pysakki pysakki) {
-                Log.i("main", pysakki.getStopName());
-                Log.i("main", pysakki.getStopId());
+                Pysakki destPysakki = pysakki;
+                Log.i("asd", destPysakki.getStopName());
+                Log.i("asd", destPysakki.getStopId());
             }
         });
     }
@@ -169,7 +203,10 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-        Log.i("main", Integer.toString(hourOfDay));
-        Log.i("main", "asdasdasd");
+        timeButton.setText(Integer.toString(hourOfDay) + ":" + Integer.toString(minute));
+        cal.set(Calendar.HOUR_OF_DAY, hourOfDay);
+        cal.set(Calendar.MINUTE, minute);
+        Log.i("time", cal.getTime().toString());
     }
+
 }
