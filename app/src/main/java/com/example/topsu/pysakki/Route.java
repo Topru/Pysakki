@@ -34,7 +34,7 @@ public class Route {
             routeApiUrl+=String.valueOf(loc.getLatitude()) + "," + String.valueOf(loc.getLongitude()) + "%7C";
         }
         routeApiUrl+= "&mode=" + mode;
-        Log.i("loc", routeApiUrl);
+        Log.i("routeApiUrl", routeApiUrl);
         VolleyRequest.makeVolleyRequest(context, routeApiUrl, new VolleyResponseListener() {
             @Override
             public void getResult(String response) {

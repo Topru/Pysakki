@@ -32,7 +32,7 @@ import java.util.List;
 public class Locator extends AppCompatActivity {
     GoogleApiClient apiClient;
 
-    Context context;
+    private Context context;
 
     private Location stopLocation;
 
@@ -79,7 +79,7 @@ public class Locator extends AppCompatActivity {
                     stopLocation = new Location("stoploc");
                     stopLocation.setLatitude(stopLati);
                     stopLocation.setLongitude(stopLong);
-                    float stopDistance = mLastLocation.distanceTo(stopLocation);
+                    float stopDistance = location.distanceTo(stopLocation);
                     Pysakki.setLocation(stopLocation);
                     Pysakki.setStopId(key);
                     Pysakki.setStopName(stop.getString("stop_name"));
@@ -102,7 +102,7 @@ public class Locator extends AppCompatActivity {
                     JSONArray routeArray = route.getJSONArray("rows");
                     JSONObject routesObject = routeArray.getJSONObject(0);
                     JSONArray routes = routesObject.getJSONArray("elements");
-                    Log.i("loc", routes.toString());
+                    Log.i("routes", routes.toString());
                     Collections.sort(pysakkiList);
                     listener.getStop(pysakkiList.get(Route.indexOfMin(routes)));
                 } catch (JSONException e) {
